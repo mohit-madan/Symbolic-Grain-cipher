@@ -2,7 +2,9 @@ import sys
 import numpy as np 
 from sage.all import *
 from random import *
+import time
 import pdb
+from collections import Counter
 
 class Symbolic:
     def __init__(self,anfstuc):
@@ -11,51 +13,50 @@ class Symbolic:
     def SXOR(self,anfStuc1,anfStuc2):
         finalAnfStuc = [0,[]]
 
-        for i in range(len(anfStuc1[1])):
-            finalAnfStuc[1].append(anfStuc1[1][i])
-
-        for i in range(len(anfStuc2[1])):
-            finalAnfStuc[1].append(anfStuc2[1][i])
-        
+        finalAnfStuc[1].extend(anfStuc1[1])
+        finalAnfStuc[1].extend(anfStuc2[1])
         finalAnfStuc[0]=(anfStuc1[0]+anfStuc2[0])%2
-        finalAnfStuctemp=[]
         
-        for i in range(len(finalAnfStuc[1])):
-            count = finalAnfStuc[1].count(finalAnfStuc[1][i])
-            if(count%2==1):
-                if finalAnfStuc[1][i] not in finalAnfStuctemp:
-                    finalAnfStuctemp.append(finalAnfStuc[1][i])
+        count_list = Counter()
+        for i in finalAnfStuc[1]:
+            count_list[tuple(i)]=(count_list[tuple(i)] + 1)%2
 
-        finalAnfStuc[1]=finalAnfStuctemp
-        # self.Symbolic = finalAnfStuc
-        x = Symbolic(finalAnfStuc)
+        finalAnfStuc[1]=[]
 
-        return x
+        for elem in count_list:
+            if(count_list[elem]==1):
+                finalAnfStuc[1].append(list(elem))
+        del count_list
+        return Symbolic(finalAnfStuc)
 
     def SAND(self,anfStuc1,anfStuc2):
         finalAnfStuc = [0,[]]
+        # t0 = time.time()
         for i in range(len(anfStuc1[1])):
             for j in range(len(anfStuc2[1])):
                 tempTerm = list(set().union(anfStuc1[1][i], anfStuc2[1][j]))
                 finalAnfStuc[1].append(tempTerm)
-
+        # print(time.time()-t0, "sand first loop")
         if anfStuc1[0] == 1:
-            for i in anfStuc2[1]:
-                finalAnfStuc[1].append(i)
+            finalAnfStuc[1].extend(anfStuc2[1])
 
-        if anfStuc2[0] == 1:
-            for i in anfStuc1[1]:
-                finalAnfStuc[1].append(i)
-        temp = []
-        for i in range(len(finalAnfStuc[1])):
-            count = finalAnfStuc[1].count(finalAnfStuc[1][i])
-            if(count%2==1):
-                if finalAnfStuc[1][i] not in temp:
-                    temp.append(finalAnfStuc[1][i])
-        finalAnfStuc[1] = temp
+        if anfStuc2[0] == 1:            
+            finalAnfStuc[1].extend(anfStuc1[1])                
+        # temp = []
+        # t0 = time.time()
+
+        count_list = Counter()
+        for i in finalAnfStuc[1]:
+            count_list[tuple(i)]=(count_list[tuple(i)] + 1)%2
+        
+        finalAnfStuc[1] = [] # emptying the finalanfstuc[1]
+        for elem in count_list:
+            if(count_list[elem]==1):
+                finalAnfStuc[1].append(list(elem))
+        del count_list
+
         finalAnfStuc[0] = (anfStuc1[0] * anfStuc2[0])%2
-        x = Symbolic(finalAnfStuc)
-        return x
+        return Symbolic(finalAnfStuc)
 
     def __mul__(self,a2):
         return self.SAND(self.anfstuc,a2.anfstuc)
@@ -111,6 +112,6 @@ def main():
     print(a[0])
     print('\n')
     print(a[1])
-    pdb.set_trace()
+
 if __name__ == '__main__':
     main()
